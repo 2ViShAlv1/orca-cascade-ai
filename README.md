@@ -1,5 +1,10 @@
 # ORCA - Outage Risk & Cascade Analyzer
 
+**▶ [Live demo](https://2vishalv1.github.io/orca-cascade-ai/)** (runs entirely in your browser) ·
+**🎬 [Demo video, 2 min](https://2vishalv1.github.io/orca-cascade-ai/media/orca-demo.mp4)** ·
+**📄 [Submission details](SUBMISSION.md)** ·
+[![Test and deploy](https://github.com/2ViShAlv1/orca-cascade-ai/actions/workflows/deploy.yml/badge.svg)](https://github.com/2ViShAlv1/orca-cascade-ai/actions/workflows/deploy.yml)
+
 > **Problem statement 01 | Software & AI** - Build an AI system that predicts cascading software failures,
 > identifies their root causes and recommends the optimal recovery strategy *before* an entire system crashes.
 > Analyse simulated server logs and service dependencies, trace how failures could spread, and compare recovery
@@ -16,6 +21,8 @@ and has the fix ranked.* More: [outage view (light theme)](docs/screenshots/dash
 [post-mortem](docs/screenshots/post-mortem.png) · [model card](docs/screenshots/model-card.png).
 
 **Zero third-party dependencies** - Python 3.10+ standard library and a vanilla-JS dashboard. Nothing to install.
+The [live demo](https://2vishalv1.github.io/orca-cascade-ai/) needs no server at all: the dashboard boots the same
+Python package in the browser with Pyodide (CPython on WebAssembly).
 
 ```bash
 python run.py                    # then open http://127.0.0.1:8000
@@ -162,7 +169,7 @@ the post-mortem.
 * **20 unit + integration tests** (`python -m unittest discover -s tests`): simulator physics, log parsing, model
   maths (GBDT attributions sum exactly to the margin), end-to-end prediction → RCA → plan, autopilot guardrails,
   adaptive rate limiter, multi-fault twin, engine commands.
-* Verified on Python 3.12 and 3.14; all sources parse under the Python 3.10 grammar; zero dependencies.
+* CI (GitHub Actions) runs the tests on Python 3.10 and 3.12 and deploys the live site; also verified on 3.14.
 * Refuses to start a second server on a port already in use (Windows would otherwise silently share it).
 
 ## Project layout
@@ -178,10 +185,12 @@ orca/recovery.py      what-if recovery planner + autopilot policy
 orca/engine.py        analysis pipeline, live engine, incidents, autopilot
 orca/report.py        live briefing + incident post-mortems
 orca/server.py        HTTP + SSE server (stdlib)
+orca/api.py           API routing shared by the server and the in-browser (Pyodide) runtime
 orca/train.py         model training on simulated incidents
 orca/evaluate.py      held-out evaluation → reports/evaluation.{md,json}
 orca/scenarios.py     chaos presets and random episodes
-web/                  dashboard (index.html, app.js, style.css)
+web/                  dashboard (index.html, app.js, backend.js, style.css)
+tools/build_site.py   builds the server-less GitHub Pages site (_site/)
 models/predictor.json trained model      reports/   evaluation + training logs
 tests/test_orca.py    test suite         docs/PITCH.md   pitch + demo + Q&A notes
 ```
