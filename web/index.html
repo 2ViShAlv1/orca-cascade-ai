@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ORCA Control Room</title>
+<link rel="stylesheet" href="style.css">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><circle cx='16' cy='16' r='13' fill='%233987e5'/><path d='M8 18c4-7 12-7 16 0' stroke='white' stroke-width='3' fill='none' stroke-linecap='round'/></svg>">
+</head>
+<body>
+<header class="topbar">
+  <div class="brand">
+    <svg viewBox="0 0 32 32" width="26" height="26" aria-hidden="true"><circle cx="16" cy="16" r="13" fill="var(--series-1)"/><path d="M8 18c4-7 12-7 16 0" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round"/></svg>
+    <div><strong>ORCA</strong><span>Outage Risk &amp; Cascade Analyzer</span></div>
+    <span id="modeTag" class="mode-tag" hidden></span>
+  </div>
+  <div id="sysStatus" class="pill">connecting…</div>
+  <div class="kpis">
+    <div class="kpi"><label>User availability</label><b id="kAvail">–</b></div>
+    <div class="kpi"><label>Ingress</label><b id="kIngress">–</b></div>
+    <div class="kpi"><label>System crash risk</label><b id="kCrash">–</b></div>
+    <div class="kpi"><label>Services failing / at risk</label><b id="kFail">–</b></div>
+    <div class="kpi"><label>Sim clock</label><b id="kClock">–</b></div>
+  </div>
+  <div class="controls">
+    <button id="btnPause" title="Pause / resume">Pause</button>
+    <button id="btnStep" title="Advance one tick">Step</button>
+    <select id="selSpeed" title="Simulation speed">
+      <option value="0.5">0.5×</option><option value="1" selected>1×</option>
+      <option value="2">2×</option><option value="4">4×</option><option value="8">8×</option>
+    </select>
+    <label class="switch" title="Let ORCA apply the top-ranked strategy automatically">
+      <input type="checkbox" id="chkAuto"><span></span> Autopilot
+    </label>
+    <button id="btnReset" class="ghost" title="Fresh environment">Reset</button>
+    <button id="btnModel" class="ghost" title="How accurate is ORCA?">Model card</button>
+    <button id="btnTheme" class="ghost" title="Switch colour theme (light works best on projectors)">Theme: auto</button>
+  </div>
+</header>
+
+<section class="chaos card">
+  <div class="chaos-title">Chaos lab</div>
+  <div class="chaos-row">
+    <select id="selPreset"></select>
+    <button id="btnPreset" class="primary">Run scenario</button>
+    <span class="sep">or</span>
+    <select id="selFault"></select>
+    <select id="selTarget"></select>
+    <label class="sev">Severity <input type="range" id="rngSev" min="0.5" max="1.6" step="0.1" value="1"><output id="outSev">1.0</output></label>
+    <button id="btnInject">Inject fault</button>
+  </div>
+  <div id="chaosActive" class="chaos-active"></div>
+</section>
+
+<section class="briefing card" id="briefing" aria-live="polite">
+  <div class="b-icon" id="briefIcon"></div>
+  <div><div class="b-label">ORCA briefing</div><p id="briefText">Connecting…</p></div>
+</section>
+
+<main class="grid">
+  <section class="card graph-card">
+    <div class="card-head">
+      <h2>Service dependency map</h2>
+      <div class="legend" id="graphLegend"></div>
+    </div>
+    <svg id="graph" viewBox="0 0 1000 470" role="img" aria-label="Service dependency graph"></svg>
+    <p class="hint">Bar under each service = predicted cascade risk · animated edges = failure propagation path · click a service for details</p>
+  </section>
+
+  <section class="card forecast-card">
+    <div class="card-head"><h2>Failure forecast</h2><span class="sub" id="modelInfo"></span></div>
+    <div class="table-wrap"><table class="tbl" id="forecast"></table></div>
+  </section>
+
+  <section class="card rca-card">
+    <div class="card-head"><h2>Root cause analysis</h2></div>
+    <div id="rca"></div>
+  </section>
+
+  <section class="card plan-card">
+    <div class="card-head"><h2>Recovery strategies</h2><span class="sub" id="planSub"></span></div>
+    <div id="planHeadline" class="headline"></div>
+    <div class="chart-box"><svg id="planChart" viewBox="0 0 640 200" preserveAspectRatio="none"></svg><div class="tip" id="planTip"></div></div>
+    <div id="planLegend" class="legend"></div>
+    <div class="table-wrap"><table class="tbl" id="planTable"></table></div>
+  </section>
+
+  <section class="card timeline-card">
+    <div class="card-head"><h2>User availability</h2><span class="sub">last 300 ticks · markers = chaos / actions / crashes</span></div>
+    <div class="chart-box"><svg id="availChart" viewBox="0 0 640 170" preserveAspectRatio="none"></svg><div class="tip" id="availTip"></div></div>
+    <div id="incidents"></div>
+  </section>
+
+  <section class="card logs-card">
+    <div class="card-head"><h2>Live logs</h2>
+      <div class="log-filters">
+        <select id="logLevel"><option value="">All levels</option><option value="WARN">WARN+</option><option value="ERROR">ERROR+</option></select>
+        <select id="logSvc"><option value="">All services</option></select>
+      </div>
+    </div>
+    <div id="logs" class="logs"></div>
+  </section>
+
+  <section class="card events-card">
+    <div class="card-head"><h2>Event timeline</h2></div>
+    <ol id="timeline" class="timeline"></ol>
+  </section>
+</main>
+
+<aside id="drawer" class="drawer" aria-hidden="true">
+  <div class="drawer-head"><h2 id="dTitle"></h2><button id="dClose" class="ghost" aria-label="Close">✕</button></div>
+  <div id="dBody"></div>
+</aside>
+<div id="modal" class="modal" hidden>
+  <div class="modal-box" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <div class="modal-head"><h2 id="mTitle"></h2>
+      <div class="modal-actions"><button id="mDownload">Download .md</button><button id="mClose" class="ghost" aria-label="Close">✕</button></div>
+    </div>
+    <div id="mBody" class="md"></div>
+  </div>
+</div>
+<div id="toast" class="toast"></div>
+<script src="backend.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

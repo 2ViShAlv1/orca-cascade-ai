@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+reports/*.log
+.venv/
+.idea/
+.vscode/
+_site/
+Screenshot*.png
